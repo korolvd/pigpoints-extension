@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "node test/logic.test.mjs",
-    "icons": "node tools/make-icons.mjs"
+    "icons": "node tools/make-icons.mjs",
+    "build": "node tools/build.mjs"
   },
   "license": "MIT"
 }
