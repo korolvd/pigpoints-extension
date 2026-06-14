@@ -91,7 +91,8 @@ async function showLastApplied() {
 }
 
 // «Откатить» активна только если на доске есть метки рейтинга (+ показывает их число).
-async function refreshRollbackButton() {
+// Доска обновляется с задержкой → если сразу после залива/отката меток 0, перепроверяем.
+async function refreshRollbackButton(retries = 2) {
   const btn = $('rollback');
   const s = await loadSettings();
   if (!s.token) { btn.disabled = true; btn.textContent = '↩ Откатить'; return; }
@@ -99,7 +100,11 @@ async function refreshRollbackButton() {
     const n = buildRollbackPlan(await getLots(s.token), s.newLotPrefix).length;
     btn.disabled = n === 0;
     btn.textContent = n ? `↩ Откатить (${n})` : '↩ Откатить';
-  } catch { btn.disabled = true; btn.textContent = '↩ Откатить'; }
+    if (n === 0 && retries > 0) setTimeout(() => refreshRollbackButton(retries - 1), 800);
+  } catch {
+    // API не ответил (504/таймаут) — кнопку не выключаем, дадим шанс кликнуть и перепроверим
+    if (retries > 0) setTimeout(() => refreshRollbackButton(retries - 1), 800);
+  }
 }
 
 // ───────────────────────── предпросмотр залива ─────────────────────────
