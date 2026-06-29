@@ -11,14 +11,14 @@ export const DEFAULTS = {
   nickCol: 'A',           // столбец с ником
   pointsCol: 'B',         // столбец с баллами
   sheetName: '',          // имя вкладки для записи (необязательно): если задано — скрипт ищет лист по имени, иначе по gid из ссылки
-  webAppUrl: '',          // Apps Script Web App для записи баллов (покупка рейтинга за балы канала)
+  webAppUrl: '',          // Apps Script Web App для записи баллов (покупка PigPoints за балы канала)
   webAppSecret: '',       // секрет веб-аппа (тот же, что в скрипте); генерится кнопкой «Скопировать скрипт»
   buySameCol: true,       // балы покупок — в тот же столбец, что pointsCol
   buyPointsCol: '',       // отдельный столбец для купленных баллов (когда buySameCol = false)
-  rewardMap: [],          // награды Twitch → рейтинг: [{ rewardId, rewardTitle, cost, points, target:'self'|'input' }] (cost — цена в балах канала; расширение само создаёт награды)
+  rewardMap: [],          // награды Twitch → PigPoints: [{ rewardId, rewardTitle, cost, points, target:'self'|'input' }] (cost — цена в балах канала; расширение само создаёт награды)
   twitchRewardsActive: false, // мастер-переключатель: награды созданы и включены на Twitch
   twitchAutoApprove: true,    // авто-начисление покупок (кроме ненайденных на Twitch ников — те на подтверждение)
-  // фича «ставка за значки на лот» (отдельно от соцрейтинга)
+  // фича «ставка за значки на лот» (отдельно от покупки PigPoints)
   movieBidsActive: false,     // вкл/выкл награды «Предложить лот»
   movieBase: 1,               // база, прибавляемая к сумме цен значков
   movieRewardTitle: 'Предложить лот', // название награды (редактируется стримером)
@@ -38,7 +38,7 @@ export const DEFAULTS = {
   twitchPending: [],      // редемпшены на ручное подтверждение стримером (пишет background)
 };
 
-// Приставка инвестора-метки для рейтинга/залива (захардкожено). Метка на лоте: "[PP] ник:сумма".
+// Приставка инвестора-метки PigPoints (захардкожено). Метка на лоте: "[PP] ник:сумма".
 export const LOT_PREFIX = '[PP] ';
 
 // ───────────────────────── Google Sheets ─────────────────────────
@@ -123,7 +123,7 @@ export async function postBids(token, bids) {
   return res.json();
 }
 
-// Начислить балы нику через Apps Script Web App (покупка рейтинга). Возвращает { ok, nick, total }.
+// Начислить балы нику через Apps Script Web App (покупка PigPoints). Возвращает { ok, nick, total }.
 // text/plain — чтобы не словить CORS-preflight; ответ читаем благодаря host_permissions на script(.googleusercontent).com.
 export async function addPoints(url, secret, nick, points) {
   if (!url) throw new Error('Не задан URL веб-аппа (Apps Script).');
@@ -165,7 +165,7 @@ export async function healthCheck(url, secret) {
   return data; // sheetFound решает вызывающий: «скрипт устарел» (имя/столбцы не совпали) важнее «лист не найден»
 }
 
-// ───────────────────────── Twitch: маппинг наград → рейтинг ─────────────────────────
+// ───────────────────────── Twitch: маппинг наград → PigPoints ─────────────────────────
 // ник из ввода зрителя: убрать ведущий @, пробелы, нижний регистр (логин Twitch — регистронезависим)
 export function normNick(s) { return String(s || '').trim().replace(/^@+/, '').trim().toLowerCase(); }
 
@@ -355,7 +355,7 @@ export function buildAppsScript(s, secret) {
 export const norm = (s) => (s || '').trim().toLowerCase();
 const isMark = (inv, prefix) => { const p = norm(prefix); return !!p && norm(inv).startsWith(p); }; // метка-инвестор [PP]…:сумма — не реальный вкладчик
 
-// ───────────────────────── ставка за значки + рейтинг: детект «свой/чужой» ─────────────────────────
+// ───────────────────────── ставка за значки + PigPoints: детект «свой/чужой» ─────────────────────────
 // Фаззи-матч названия лота по доске (та же метрика, что «похожий лот» в pointauc) + «единственный
 // реальный вкладчик» (метки [PP] не считаем за вкладчиков). login — twitch-логин зрителя.
 // → { isNew, isSole, matchedName, score }.
@@ -384,5 +384,5 @@ export function moviePointsDecision({ points, usePoints, alreadyApplied, lot, dr
   if (!lot || lot.error) return { value: 0, ownership: 'unknown', reason: 'минус не применён: доска недоступна' };
   if (lot.isNew) return { value: points, ownership: 'new', reason: '' };
   if (lot.isSole) return { value: points, ownership: 'sole', reason: '' };
-  return { value: 0, ownership: 'foreign', reason: 'минус не учтён: поддув в общий лот' };
+  return { value: 0, ownership: 'foreign', reason: 'минус не учтён: общий лот' };
 }

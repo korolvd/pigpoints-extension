@@ -379,7 +379,7 @@ function renderMovieJournal(log) {
     const head = e.ok
       ? `<b style="font-weight:500" class="pos">${e.amount}</b><span class="muted"> → pointauc</span>`
       : `<span class="neg">${e.refunded ? 'балл возвращён' : 'ошибка'}</span>`;
-    const own = e.ownership === 'foreign' ? '<span class="tag skip">поддув</span> '
+    const own = e.ownership === 'foreign' ? '<span class="tag skip">общий</span> '
       : (e.ownership === 'new' || e.ownership === 'sole') ? '<span class="tag update">свой</span> '
       : e.ownership === 'unknown' ? '<span class="tag skip">доска недоступна</span> ' : '';
     let detail;

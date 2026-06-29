@@ -3,7 +3,7 @@ chcp 1251 >nul
 setlocal
 
 REM ============================================================
-REM  PigRating - заливка ТЕСТОВЫХ лотов в pointauc (для проверки расширения)
+REM  PigPoints - заливка ТЕСТОВЫХ лотов в pointauc (для проверки расширения)
 REM
 REM  ВАЖНО: храни этот файл в кодировке Windows-1251 (ANSI / Кириллица).
 REM         Если пересохранить в UTF-8 - кириллица сломается.
@@ -28,14 +28,11 @@ set "TOKEN=PASTE_TOKEN_HERE"
 REM set "DRYRUN=1"
 
 REM =================== СПИСОК ЛОТОВ ===========================
-call :add "Half-Life 2"    "2BeFirefly"    800 don
-call :add "INSIDE"         "maxxsxsx"      200 don
-call :add "Mass Effect 2"  "ffirinor"      600 don
-call :add "Mass Effect 2"  "vova_ova1"     200 don
-call :add "Diablo 3"       "oridontworry"  300 don
-call :add "Outlast"        "oridontworry"  150 don
-call :add "Cyberpunk 2077" "xalreen"       500 don
-call :add "Elden Ring"     "Pajamic"       300 don
+call :add "Dune"         "darkwolf"   551 don
+call :add "Hades"        "lena_play"  281 don
+call :add "Inside"       "nikitos"    206 don
+call :add "Blade Runner" "kotik"      251 don
+call :add "Outer Wilds"  "procrast"   201 don
 REM =================== КОНЕЦ СПИСКА ===========================
 
 del "%TEMP%\pa_bid.json" 2>nul

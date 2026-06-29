@@ -115,11 +115,11 @@ eq('buildAppsScript: lock через tryLock → валидный JSON при к
 
 // ───────── 6) resolveRedemption: маппинг наград Twitch → начисление ─────────
 const RMAP = [
-  { rewardTitle: 'Рейтинг +50', points: 50, target: 'self' },
+  { rewardTitle: 'PigPoints +50', points: 50, target: 'self' },
   { rewardId: 'abc', rewardTitle: 'старое имя', points: 100, target: 'self' },
   { rewardTitle: 'Насвинячить', points: -30, target: 'input' },
 ];
-eq('resolve: по названию (регистр), себе → логин зрителя', resolveRedemption(RMAP, { rewardTitle: 'рейтинг +50', userLogin: 'Vasya' }), { nick: 'vasya', points: 50, target: 'self' });
+eq('resolve: по названию (регистр), себе → логин зрителя', resolveRedemption(RMAP, { rewardTitle: 'pigpoints +50', userLogin: 'Vasya' }), { nick: 'vasya', points: 50, target: 'self' });
 eq('resolve: по rewardId (приоритет, имя другое)', resolveRedemption(RMAP, { rewardId: 'abc', rewardTitle: 'неважно', userLogin: 'Petya' }), { nick: 'petya', points: 100, target: 'self' });
 eq('resolve: target input — ник из ввода (@/пробелы убраны)', resolveRedemption(RMAP, { rewardTitle: 'Насвинячить', userLogin: 'a', userInput: ' @TargetGuy ' }), { nick: 'targetguy', points: -30, target: 'input' });
 eq('resolve: input без ника → начисление себе', resolveRedemption(RMAP, { rewardTitle: 'Насвинячить', userLogin: 'A', userInput: '' }), { nick: 'a', points: -30, target: 'input' });
@@ -180,30 +180,30 @@ eq('badgeImage: hypetrain → v1 по наличию', movieBadgeImage(poolBy('h
 eq('badgeImage: нет в карте → null', movieBadgeImage(poolBy('cliplead1'), BMAP), null);
 eq('badgeImage: пустая карта → null', movieBadgeImage(poolBy('vip'), {}), null);
 
-// ───────── 6г) findMovieLot + moviePointsDecision: соцрейтинг в ставке за значки ─────────
+// ───────── 6г) findMovieLot + moviePointsDecision: PigPoints в ставке за значки ─────────
 const MLOTS = [
   { id: 'a', name: 'Дюна', investors: ['vasya'] },
   { id: 'b', name: 'Матрица', investors: ['petya', 'kolya'] },
-  { id: 'c', name: 'Один дома', investors: ['[СОЦРЕЙТИНГ] x:5', 'masha'] },
+  { id: 'c', name: 'Один дома', investors: ['[PP] x:5', 'masha'] },
 ];
 const pick = (r) => ({ isNew: r.isNew, isSole: r.isSole });
-eq('findMovieLot: нет на доске → новый', pick(findMovieLot(MLOTS, 'Интерстеллар', 'vasya', '[СОЦРЕЙТИНГ] ')), { isNew: true, isSole: false });
-eq('findMovieLot: существует, единственный вкладчик', pick(findMovieLot(MLOTS, 'Дюна', 'vasya', '[СОЦРЕЙТИНГ] ')), { isNew: false, isSole: true });
-eq('findMovieLot: фаззи/регистр — «дюна» матчит «Дюна»', findMovieLot(MLOTS, 'дюна', 'vasya', '[СОЦРЕЙТИНГ] ').isNew, false);
-eq('findMovieLot: есть другие вкладчики → не единственный', pick(findMovieLot(MLOTS, 'Матрица', 'petya', '[СОЦРЕЙТИНГ] ')), { isNew: false, isSole: false });
-eq('findMovieLot: зритель не вкладчик существующего → не единственный', pick(findMovieLot(MLOTS, 'Матрица', 'vasya', '[СОЦРЕЙТИНГ] ')), { isNew: false, isSole: false });
-eq('findMovieLot: метка [СОЦРЕЙТИНГ] не вкладчик → единственный (masha)', pick(findMovieLot(MLOTS, 'Один дома', 'masha', '[СОЦРЕЙТИНГ] ')), { isNew: false, isSole: true });
+eq('findMovieLot: нет на доске → новый', pick(findMovieLot(MLOTS, 'Интерстеллар', 'vasya', '[PP] ')), { isNew: true, isSole: false });
+eq('findMovieLot: существует, единственный вкладчик', pick(findMovieLot(MLOTS, 'Дюна', 'vasya', '[PP] ')), { isNew: false, isSole: true });
+eq('findMovieLot: фаззи/регистр — «дюна» матчит «Дюна»', findMovieLot(MLOTS, 'дюна', 'vasya', '[PP] ').isNew, false);
+eq('findMovieLot: есть другие вкладчики → не единственный', pick(findMovieLot(MLOTS, 'Матрица', 'petya', '[PP] ')), { isNew: false, isSole: false });
+eq('findMovieLot: зритель не вкладчик существующего → не единственный', pick(findMovieLot(MLOTS, 'Матрица', 'vasya', '[PP] ')), { isNew: false, isSole: false });
+eq('findMovieLot: метка [PP] не вкладчик → единственный (masha)', pick(findMovieLot(MLOTS, 'Один дома', 'masha', '[PP] ')), { isNew: false, isSole: true });
 
 eq('moviePointsDecision: плюс — всегда', moviePointsDecision({ points: 5, usePoints: true, alreadyApplied: false, lot: null }), { value: 5, ownership: 'plus', reason: '' });
 eq('moviePointsDecision: минус в новый лот — применяется', moviePointsDecision({ points: -7, usePoints: true, alreadyApplied: false, lot: { isNew: true } }), { value: -7, ownership: 'new', reason: '' });
 eq('moviePointsDecision: минус, единственный вкладчик — применяется', moviePointsDecision({ points: -7, usePoints: true, alreadyApplied: false, lot: { isNew: false, isSole: true } }), { value: -7, ownership: 'sole', reason: '' });
-eq('moviePointsDecision: минус в чужой (поддув) → 0', moviePointsDecision({ points: -7, usePoints: true, alreadyApplied: false, lot: { isNew: false, isSole: false } }).value, 0);
+eq('moviePointsDecision: минус в чужой (общий лот) → 0', moviePointsDecision({ points: -7, usePoints: true, alreadyApplied: false, lot: { isNew: false, isSole: false } }).value, 0);
 eq('moviePointsDecision: галка выкл (dropNegForeign=false) → минус везде', moviePointsDecision({ points: -7, usePoints: true, alreadyApplied: false, lot: { isNew: false, isSole: false }, dropNegForeign: false }), { value: -7, ownership: 'minus', reason: '' });
 eq('moviePointsDecision: минус, доска недоступна → 0/unknown', moviePointsDecision({ points: -7, usePoints: true, alreadyApplied: false, lot: { error: true } }), { value: 0, ownership: 'unknown', reason: 'минус не применён: доска недоступна' });
 eq('moviePointsDecision: выкл → 0', moviePointsDecision({ points: 5, usePoints: false, alreadyApplied: false, lot: null }).value, 0);
 eq('moviePointsDecision: уже учтён в раунде → 0', moviePointsDecision({ points: 5, usePoints: true, alreadyApplied: true, lot: null }).value, 0);
-eq('moviePointsDecision: рейтинг 0 → 0', moviePointsDecision({ points: 0, usePoints: true, alreadyApplied: false, lot: null }).value, 0);
-eq('moviePointsDecision: NaN рейтинг → 0', moviePointsDecision({ points: NaN, usePoints: true, alreadyApplied: false, lot: null }).value, 0);
+eq('moviePointsDecision: PigPoints 0 → 0', moviePointsDecision({ points: 0, usePoints: true, alreadyApplied: false, lot: null }).value, 0);
+eq('moviePointsDecision: NaN PigPoints → 0', moviePointsDecision({ points: NaN, usePoints: true, alreadyApplied: false, lot: null }).value, 0);
 
 // ───────── 7) Twitch: validateToken + helix ─────────
 globalThis.fetch = async (url, opts = {}) => ({ ok: true, status: 200, json: async () => ({ client_id: 'cid', login: 'streamer', user_id: '123', scopes: ['channel:manage:redemptions'] }) });
@@ -279,10 +279,10 @@ eq('syncRewards: награду из маппинга НЕ удаляет', orph
 const adoptCalls = [];
 globalThis.fetch = async (url, opts = {}) => {
   adoptCalls.push({ method: opts.method, url });
-  if (opts.method === 'GET') return { ok: true, status: 200, text: async () => JSON.stringify({ data: [{ id: 'existed', title: 'Поднять рейтинг' }] }) };
+  if (opts.method === 'GET') return { ok: true, status: 200, text: async () => JSON.stringify({ data: [{ id: 'existed', title: 'Поднять PigPoints' }] }) };
   return { ok: true, status: 200, text: async () => JSON.stringify({ data: [{ id: 'existed' }] }) };
 };
-const adopted = await syncRewards({ clientId: 'c', token: 't', broadcasterId: 'b' }, [{ rewardTitle: 'поднять РЕЙТИНГ', cost: 100, points: 5, target: 'self' }]);
+const adopted = await syncRewards({ clientId: 'c', token: 't', broadcasterId: 'b' }, [{ rewardTitle: 'поднять PigPoints', cost: 100, points: 5, target: 'self' }]);
 eq('syncRewards: адопция одноимённой (регистр игнор) — PATCH по id, без POST', { id: adopted[0].rewardId, patched: adoptCalls.some((c) => c.method === 'PATCH' && /id=existed/.test(c.url)), posted: adoptCalls.some((c) => c.method === 'POST') }, { id: 'existed', patched: true, posted: false });
 eq('syncRewards: адоптированную одноимённую не удаляет', adoptCalls.some((c) => c.method === 'DELETE'), false);
 

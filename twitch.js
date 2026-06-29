@@ -64,7 +64,7 @@ function rewardBody(row) {
     is_user_input_required: row.target === 'input',
     should_redemptions_skip_request_queue: false, // редемпшены идут в очередь → мы их подтверждаем/возвращаем (режим B)
   };
-  if (row.target === 'input') b.prompt = row.prompt || 'Введи ник, кому начислить рейтинг';
+  if (row.target === 'input') b.prompt = row.prompt || 'Введи ник, кому начислить PigPoints';
   return b;
 }
 

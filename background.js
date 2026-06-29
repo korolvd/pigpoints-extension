@@ -136,7 +136,7 @@ async function setRedemption(ctx, rewardId, redemptionId, status) {
   catch (e) { return e.message; }
 }
 
-// Кэш ростера (строки таблицы {nick, points}) для подсказок похожих ников И рейтинга в ставке за значки.
+// Кэш ростера (строки таблицы {nick, points}) для подсказок похожих ников И PigPoints в ставке за значки.
 // SW может выгрузиться → перечитаем по TTL. Один кэш на оба применения.
 let rosterCache = { at: 0, rows: [] };
 async function loadRosterRows(s) {
@@ -158,7 +158,7 @@ async function getPoints(s, login) {
   return row && Number.isFinite(row.points) ? row.points : 0;
 }
 
-// Лоты pointauc для детекта «свой/чужой» (только когда рейтинг < 0). Кэш в пределах раунда, короткий TTL.
+// Лоты pointauc для детекта «свой/чужой» (только когда PigPoints < 0). Кэш в пределах раунда, короткий TTL.
 let lotsCache = { gen: -1, at: 0, lots: null };
 async function getMovieLots(tok) {
   const now = Date.now();
@@ -293,7 +293,7 @@ function logEvent(entry) {
 }
 
 // ── фича «ставка за значки на лот» ──
-// Надёжно, как рейтинговая ветка: незавершённые активации персистятся (moviePending) → переживают сон SW;
+// Незавершённые активации персистятся (moviePending) → переживают сон SW;
 // обработка сериализована (drainMovie singleton + claim-перед-обработкой = at-most-once); «зачтённое» —
 // отдельный movieCounted (без капа, авторитетный источник анти-повтора), журнал — только для показа.
 const seenMsg = new Set();   // дедуп сообщений чата
@@ -428,12 +428,12 @@ async function processMovieItem(item) { // { redemptionId, userId, userLogin, mo
   const pointsApplied = rdec.value;
   const amount = base + fresh.reduce((n, a) => n + (Number(a.price) || 0), 0) + pointsApplied;
   if (movieGen !== gen) { await setRedemption(ctx, s.movieRewardId, item.redemptionId, 'CANCELED'); return; } // раунд сброшен пока считали → возврат, без записи в новый
-  if (!((fresh.length || pointsApplied !== 0 || !participated) && amount > 0)) { // нет новых значков/рейтинга (уже участвовал) или сумма ≤ 0 → возврат
+  if (!((fresh.length || pointsApplied !== 0 || !participated) && amount > 0)) { // нет новых значков/PigPoints (уже участвовал) или сумма ≤ 0 → возврат
     const err = await setRedemption(ctx, s.movieRewardId, item.redemptionId, 'CANCELED');
-    return logMovie({ ok: false, refunded: true, userId: item.userId, userLogin, movie, base, points, pointsApplied, ownership: rdec.ownership, pointsSkip: rdec.reason, amount, note: (amount <= 0 ? 'ставка ≤ 0 (минус рейтинга) — возврат' : '') + (err ? `${amount <= 0 ? ' · ' : ''}возврат не прошёл: ${err}` : '') }, gen);
+    return logMovie({ ok: false, refunded: true, userId: item.userId, userLogin, movie, base, points, pointsApplied, ownership: rdec.ownership, pointsSkip: rdec.reason, amount, note: (amount <= 0 ? 'ставка ≤ 0 (минус PigPoints) — возврат' : '') + (err ? `${amount <= 0 ? ' · ' : ''}возврат не прошёл: ${err}` : '') }, gen);
   }
   let bidErr = '';
-  // investorId = логин (не числовой userId): запись и чтение «единственного вкладчика» (findMovieLot) идут по одному ключу; так же в соцрейтинговой ветке и по README
+  // investorId = логин (не числовой userId): запись и чтение «единственного вкладчика» (findMovieLot) идут по одному ключу; как описано в README
   try { await postBids(s.token, [{ cost: amount, message: movie, username: userLogin, investorId: userLogin || item.userId, insertStrategy: 'none', isDonation: !!s.movieAsDonation }]); }
   catch (e) { bidErr = e.message; }
   if (bidErr) { // ставка не ушла → возврат балла; значки НЕ зачтены (можно повторить)
@@ -442,8 +442,8 @@ async function processMovieItem(item) { // { redemptionId, userId, userLogin, mo
   }
   if (movieGen !== gen) { await setRedemption(ctx, s.movieRewardId, item.redemptionId, 'CANCELED'); return; } // раунд сбросили во время ставки → возврат балла, без зачёта (стрэглер-ставка уйдёт в очередь pointauc на ручной разбор)
   const countedKeys = fresh.map((a) => a.key);
-  if (pointsApplied !== 0) countedKeys.push('__points'); // рейтинг зачтён один раз за раунд на зрителя
-  await markMovieCounted(item.userId, countedKeys, gen); // успех → пометить новые значки + рейтинг зачтёнными (если раунд не сброшен)
+  if (pointsApplied !== 0) countedKeys.push('__points'); // PigPoints зачтены один раз за раунд на зрителя
+  await markMovieCounted(item.userId, countedKeys, gen); // успех → пометить новые значки + PigPoints зачтёнными (если раунд не сброшен)
   const err = await setRedemption(ctx, s.movieRewardId, item.redemptionId, 'FULFILLED');
   return logMovie({ ok: true, userId: item.userId, userLogin, movie, base, badges: fresh.map((a) => ({ key: a.key, price: a.price })), points, pointsApplied, ownership: rdec.ownership, pointsSkip: rdec.reason, amount, note: err ? `подтверждение Twitch не прошло: ${err}` : '' }, gen);
 }
