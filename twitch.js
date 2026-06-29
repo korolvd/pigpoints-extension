@@ -1,7 +1,7 @@
 // Twitch-интеграция: OAuth (implicit, без бэкенда) + Helix.
 // Чистые fetch-функции (validateToken/helix) тестируемы; connectTwitch требует chrome.identity (живёт в расширении).
 
-// Общий Client ID встроенного приложения PigRating (публичный, не секрет).
+// Общий Client ID встроенного приложения PigPoints (публичный, не секрет).
 // Стримеры просто жмут «Подключить»; поле в настройках — необязательный override своим приложением.
 export const DEFAULT_TWITCH_CLIENT_ID = 'dz9xq3cgvky8wz4qg0jbijc351ylox';
 

@@ -1,10 +1,10 @@
-// Сборка чистого пакета расширения pigrating.zip (только рантайм-файлы), без зависимостей.
+// Сборка чистого пакета расширения pigpoints.zip (только рантайм-файлы), без зависимостей.
 // Запуск: node tools/build.mjs  (или npm run build)
 import zlib from 'node:zlib';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const STORE = process.argv.includes('--store'); // --store → манифест без поля key (для первой загрузки в Chrome Web Store)
-const OUT = STORE ? 'pigrating-store.zip' : 'pigrating.zip';
+const OUT = STORE ? 'pigpoints-store.zip' : 'pigpoints.zip';
 
 const FILES = [
   'manifest.json',

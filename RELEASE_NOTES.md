@@ -33,9 +33,9 @@
 ---
 
 ## Установка / обновление (ручная)
-1. Скачай **`pigrating.zip`** → распакуй → `chrome://extensions` → Режим разработчика → «Загрузить распакованное» (при обновлении — просто ↻).
+1. Скачай **`pigpoints.zip`** → распакуй → `chrome://extensions` → Режим разработчика → «Загрузить распакованное» (при обновлении — просто ↻).
 2. Вкладку аукциона держи открытой (API шлёт команды в неё).
 3. **Переподключи Twitch** («Подключить Twitch») — нужны скоупы `channel:manage:redemptions`, `user:read:chat`, `channel:read:subscriptions`, `channel:read:vips`, `moderation:read`, `moderator:read:followers`.
 4. Для записи в таблицу — поставь Apps Script («❔ Как установить?»). Награды Twitch требуют статуса **Affiliate/Partner**.
 
-Полное описание — в [README](https://github.com/korolvd/pigrating-extension#readme) · детальная история по версиям — в [CHANGELOG](https://github.com/korolvd/pigrating-extension/blob/master/CHANGELOG.md).
+Полное описание — в [README](https://github.com/korolvd/pigpoints-extension#readme) · детальная история по версиям — в [CHANGELOG](https://github.com/korolvd/pigpoints-extension/blob/master/CHANGELOG.md).
