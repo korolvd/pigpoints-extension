@@ -3,6 +3,9 @@
 import zlib from 'node:zlib';
 import { readFileSync, writeFileSync } from 'node:fs';
 
+const STORE = process.argv.includes('--store'); // --store → манифест без поля key (для первой загрузки в Chrome Web Store)
+const OUT = STORE ? 'pigrating-store.zip' : 'pigrating.zip';
+
 const FILES = [
   'manifest.json',
   'background.js',
@@ -39,7 +42,8 @@ const local = [], central = [];
 let offset = 0;
 
 for (const name of FILES) {
-  const data = readFileSync(name);
+  let data = readFileSync(name);
+  if (STORE && name === 'manifest.json') { const m = JSON.parse(data.toString('utf8')); delete m.key; data = Buffer.from(JSON.stringify(m, null, 2) + '\n', 'utf8'); } // store: ID назначит магазин, key не нужен
   const comp = zlib.deflateRawSync(data); // метод 8 (deflate) — сырой поток
   const crc = crc32(data);
   const nameBuf = Buffer.from(name, 'utf8');
@@ -69,6 +73,6 @@ eocd.writeUInt32LE(0x06054b50, 0);
 eocd.writeUInt16LE(FILES.length, 8); eocd.writeUInt16LE(FILES.length, 10);
 eocd.writeUInt32LE(centralBuf.length, 12); eocd.writeUInt32LE(localBuf.length, 16);
 
-writeFileSync('pigrating.zip', Buffer.concat([localBuf, centralBuf, eocd]));
-console.log(`pigrating.zip — ${FILES.length} файлов`);
+writeFileSync(OUT, Buffer.concat([localBuf, centralBuf, eocd]));
+console.log(`${OUT} — ${FILES.length} файлов${STORE ? ' (без key — для Chrome Web Store)' : ''}`);
 for (const f of FILES) console.log('  +', f);
